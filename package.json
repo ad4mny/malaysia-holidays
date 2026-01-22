@@ -1,0 +1,55 @@
+{
+  "name": "malaysia-holidays",
+  "version": "1.1.0",
+  "description": "Fast and lightweight npm package to get Malaysia public holidays with state filtering support",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "malaysia-holidays": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "test": "node tests/comprehensive-test.js",
+    "test:state": "node tests/test-state-feature.js",
+    "demo": "node examples/example.js",
+    "demo:state": "node examples/example-state.js"
+  },
+  "keywords": [
+    "malaysia",
+    "holiday",
+    "public-holiday",
+    "calendar",
+    "date",
+    "scraper",
+    "state-filtering",
+    "regional-holidays",
+    "malaysia-states"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ad4mny/malaysia-holidays.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ad4mny/malaysia-holidays/issues"
+  },
+  "homepage": "https://github.com/ad4mny/malaysia-holidays#readme",
+  "author": "Adam Zulkornain <adamzulkornain@users.noreply.github.com>",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
