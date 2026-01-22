@@ -1,6 +1,6 @@
 {
   "name": "malaysia-holidays",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "description": "Fast and lightweight npm package to get Malaysia public holidays with state filtering support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
