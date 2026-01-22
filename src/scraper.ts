@@ -1,6 +1,5 @@
 import * as https from "https";
 import type { IncomingMessage } from "http";
-import * as cheerio from "cheerio";
 import { Holiday, HolidayOptions, HolidayResult } from "./types";
 import { Cache } from "./cache";
 
@@ -34,19 +33,40 @@ function fetchHtml(url: string): Promise<string> {
 }
 
 /**
+ * Extract text content from HTML element
+ */
+function extractText(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, "") // Remove HTML tags
+    .replace(/&nbsp;/g, " ") // Replace &nbsp; with space
+    .replace(/&amp;/g, "&") // Replace &amp; with &
+    .replace(/&lt;/g, "<") // Replace &lt; with <
+    .replace(/&gt;/g, ">") // Replace &gt; with >
+    .replace(/&quot;/g, '"') // Replace &quot; with "
+    .trim();
+}
+
+/**
  * Parse holiday data from HTML
  */
 function parseHolidays(html: string, year: number): Holiday[] {
-  const $ = cheerio.load(html);
   const holidays: Holiday[] = [];
 
-  // Find the table containing holidays
-  $("table tr").each((_: number, row: any) => {
-    const cells = $(row).find("td");
-    if (cells.length >= 3) {
-      const dayOfWeek = $(cells[0]).text().trim();
-      const dateText = $(cells[1]).text().trim();
-      const name = $(cells[2]).text().trim();
+  // Extract table rows using regex
+  const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
+  if (!tableMatch) return holidays;
+
+  const tableContent = tableMatch[1];
+  const rowMatches = tableContent.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi);
+
+  for (const rowMatch of rowMatches) {
+    const rowHtml = rowMatch[1];
+    const cellMatches = [...rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)];
+
+    if (cellMatches.length >= 3) {
+      const dayOfWeek = extractText(cellMatches[0][1]);
+      const dateText = extractText(cellMatches[1][1]);
+      const name = extractText(cellMatches[2][1]);
 
       if (dayOfWeek && dateText && name) {
         // Parse date (e.g., "Jan 01" -> "2026-01-01")
@@ -157,7 +177,7 @@ function parseHolidays(html: string, year: number): Holiday[] {
         }
       }
     }
-  });
+  }
 
   return holidays;
 }
@@ -267,35 +287,51 @@ export async function getHolidaysByState(
   state: string,
   options: HolidayOptions = {},
 ): Promise<HolidayResult> {
-  const result = await getHolidays(options);
+  const year = options.year || new Date().getFullYear();
+  const useCache = options.useCache !== false; // Default to true
+  const cache = new Cache(options.cacheDir);
 
-  // Normalize state name for comparison
-  const normalizedState = state.toLowerCase().trim();
+  // Normalize state name for URL (lowercase, handle spaces)
+  const stateUrlSegment = state.toLowerCase().trim().replace(/\s+/g, "-");
 
-  // Filter holidays that are either national or specific to the requested state
-  const filteredHolidays = result.holidays.filter((holiday) => {
-    // Include all national holidays
-    if (holiday.type === "national") {
-      return true;
+  // Build state-specific URL
+  const url = `${BASE_URL}/${stateUrlSegment}/${year}`;
+
+  // Check cache first (using a state-specific cache key)
+  const cacheKey = `${year}-${stateUrlSegment}`;
+  if (useCache) {
+    const cached = cache.get<HolidayResult>(cacheKey);
+    if (cached) {
+      return {
+        ...cached,
+        fetchedAt: new Date(cached.fetchedAt), // Convert string back to Date
+      };
+    }
+  }
+
+  // Fetch fresh data from state-specific URL
+  try {
+    const html = await fetchHtml(url);
+    const holidays = parseHolidays(html, year);
+
+    const result: HolidayResult = {
+      holidays,
+      year,
+      fetchedAt: new Date(),
+      source: url,
+    };
+
+    // Save to cache with state-specific key
+    if (useCache) {
+      cache.set(cacheKey, result);
     }
 
-    // Include state-specific holidays if states array includes the requested state
-    if (holiday.states && holiday.states.length > 0) {
-      return holiday.states.some(
-        (s) => s.toLowerCase().trim() === normalizedState,
-      );
-    }
-
-    // Include if state name is in the holiday name (fallback)
-    return holiday.name.toLowerCase().includes(normalizedState);
-  });
-
-  return {
-    holidays: filteredHolidays,
-    year: result.year,
-    fetchedAt: result.fetchedAt,
-    source: result.source,
-  };
+    return result;
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch holidays for ${state}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 /**

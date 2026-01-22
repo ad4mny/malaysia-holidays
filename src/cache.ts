@@ -19,16 +19,16 @@ export class Cache {
     }
   }
 
-  getCacheKey(year: number): string {
-    return `malaysia-holidays-${year}.json`;
+  getCacheKey(key: number | string): string {
+    return `malaysia-holidays-${key}.json`;
   }
 
-  getCachePath(year: number): string {
-    return path.join(this.cacheDir, this.getCacheKey(year));
+  getCachePath(key: number | string): string {
+    return path.join(this.cacheDir, this.getCacheKey(key));
   }
 
-  has(year: number): boolean {
-    const cachePath = this.getCachePath(year);
+  has(key: number | string): boolean {
+    const cachePath = this.getCachePath(key);
     if (!fs.existsSync(cachePath)) {
       return false;
     }
@@ -45,13 +45,13 @@ export class Cache {
     return true;
   }
 
-  get<T>(year: number): T | null {
-    if (!this.has(year)) {
+  get<T>(key: number | string): T | null {
+    if (!this.has(key)) {
       return null;
     }
 
     try {
-      const cachePath = this.getCachePath(year);
+      const cachePath = this.getCachePath(key);
       const data = fs.readFileSync(cachePath, "utf-8");
       return JSON.parse(data);
     } catch (error) {
@@ -59,9 +59,9 @@ export class Cache {
     }
   }
 
-  set<T>(year: number, data: T): void {
+  set<T>(key: number | string, data: T): void {
     try {
-      const cachePath = this.getCachePath(year);
+      const cachePath = this.getCachePath(key);
       fs.writeFileSync(cachePath, JSON.stringify(data, null, 2), "utf-8");
     } catch (error) {
       process.stderr.write(`Failed to write cache: ${error}\n`);

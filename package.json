@@ -1,6 +1,6 @@
 {
   "name": "malaysia-holidays",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Fast and lightweight npm package to get Malaysia public holidays with state filtering support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -42,9 +42,7 @@
   "homepage": "https://github.com/ad4mny/malaysia-holidays#readme",
   "author": "Adam Zulkornain <adamzulkornain@users.noreply.github.com>",
   "license": "MIT",
-  "dependencies": {
-    "cheerio": "^1.0.0-rc.12"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.11.5",
     "typescript": "^5.3.3"
