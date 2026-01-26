@@ -43,6 +43,11 @@ function extractText(html: string): string {
     .replace(/&lt;/g, "<") // Replace &lt; with <
     .replace(/&gt;/g, ">") // Replace &gt; with >
     .replace(/&quot;/g, '"') // Replace &quot; with "
+    .replace(/&#039;/g, "'") // Replace &#039; with '
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10))) // Replace numeric entities
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16)),
+    ) // Replace hex entities
     .trim();
 }
 
